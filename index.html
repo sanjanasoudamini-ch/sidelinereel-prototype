@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SidelineReel — Coach Review Queue</title>
+<style>
+  :root{
+    --bg:#F5F6F5;
+    --paper:#FFFFFF;
+    --ink:#151815;
+    --muted:#727972;
+    --line:#E7E9E6;
+    --accent:#E8963C;
+    --accent-ink:#8A4E10;
+    --accent-soft:#FCEFDC;
+    --good:#2F7D5A;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:32px 14px;
+  }
+  .phone{
+    width:390px;
+    max-width:100%;
+    background:var(--paper);
+    border-radius:22px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    box-shadow:0 16px 40px rgba(20,24,20,0.10);
+  }
+
+  /* Header */
+  header.app{
+    padding:20px 20px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  header.app .crumbs{
+    font-size:12.5px;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .hero-row{ display:flex; align-items:center; justify-content:space-between; }
+  .hero-text h1{ margin:0; font-size:20px; font-weight:700; }
+  .hero-text p{ margin:2px 0 0; font-size:13px; color:var(--muted); }
+  .count-pill{
+    background:var(--accent-soft);
+    color:var(--accent-ink);
+    font-weight:700;
+    font-size:15px;
+    width:36px;height:36px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .back-x{
+    background:none;border:none;color:var(--muted);
+    font-size:13px;cursor:pointer;padding:0;margin-bottom:10px;
+  }
+
+  /* List */
+  .list{ padding:12px 14px; display:flex; flex-direction:column; gap:8px; }
+  .section-label{ padding:2px 20px 6px; font-size:11.5px; font-weight:600; color:var(--muted); }
+
+  .card{
+    display:flex; align-items:center; gap:12px; padding:11px;
+    border-radius:var(--radius);
+    background:var(--paper);
+    border:1px solid var(--line);
+    cursor:pointer;
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  .card:hover{ border-color:#D8DAD6; box-shadow:0 2px 10px rgba(20,24,20,0.06); }
+  .card:active{ transform:scale(0.99); }
+
+  .jersey{
+    width:46px;height:46px;border-radius:10px;
+    background:#EEF0ED;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px; flex-shrink:0;
+  }
+  .card-body{ flex:1; min-width:0; }
+  .card-body h4{ margin:0 0 2px; font-size:14px; font-weight:600; }
+  .card-body .team{ font-size:12px; color:var(--muted); margin-bottom:5px; }
+  .matchup{
+    display:inline-flex; align-items:center;
+    font-size:11.5px; font-weight:700; color:var(--accent-ink);
+    background:var(--accent-soft);
+    padding:2px 8px; border-radius:20px;
+  }
+  .chev{ color:var(--muted); font-size:18px; flex-shrink:0; }
+
+  .footer-note{
+    margin:2px 14px 16px; padding:11px 13px;
+    font-size:12px; color:var(--muted); line-height:1.5;
+    background:var(--bg);
+    border-radius:12px;
+  }
+
+  /* Empty state */
+  .empty{ text-align:center; padding:44px 26px 40px; }
+  .empty .check{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--accent-soft);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 14px; font-size:22px; color:var(--good); font-weight:700;
+  }
+  .empty h3{ margin:0 0 6px; font-size:16px; }
+  .empty p{ margin:0; font-size:13px; color:var(--muted); line-height:1.5; }
+
+  /* Review screen */
+  .video-frame{
+    background:#EEF0ED;
+    height:170px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    border-bottom:1px solid var(--line);
+  }
+  .video-frame .play{
+    width:50px;height:50px;border-radius:50%;
+    background:var(--paper);
+    box-shadow:0 4px 14px rgba(20,24,20,0.14);
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;color:var(--ink);
+  }
+  .video-frame .tag{
+    position:absolute; bottom:11px; left:13px;
+    font-size:11.5px; font-weight:600;
+    background:rgba(21,24,21,0.65);
+    padding:4px 9px; border-radius:20px; color:#fff;
+  }
+  .review-body{ padding:16px 18px 18px; }
+  .review-body h3{ margin:0 0 4px; font-size:16px; }
+  .review-body .sub{ margin:0 0 14px; font-size:13px; color:var(--muted); line-height:1.5; }
+  .candidates{ display:flex; flex-direction:column; gap:8px; }
+  .cand{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 12px;
+    border-radius:var(--radius);
+    background:var(--paper);
+    border:1.5px solid var(--line);
+    cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .cand:hover{ border-color:var(--accent); background:var(--accent-soft); }
+  .cand .num{
+    width:38px;height:38px;border-radius:9px;
+    background:var(--ink); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700; font-size:14px; flex-shrink:0;
+  }
+  .cand .info{ flex:1; }
+  .cand .info .name{ font-weight:600; font-size:13.5px; }
+  .cand .info .meta{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .cand .pick{ font-size:12px; color:var(--accent-ink); font-weight:700; }
+  .none-btn{
+    margin-top:12px; width:100%;
+    background:none; border:1.5px dashed var(--line);
+    border-radius:var(--radius);
+    padding:11px; font-size:13px; color:var(--muted);
+    cursor:pointer;
+  }
+  .none-btn:hover{ border-color:#C7CAC5; color:var(--ink); }
+
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff;
+    padding:11px 18px; border-radius:30px;
+    font-size:13px; font-weight:600;
+    box-shadow:0 10px 26px rgba(0,0,0,0.22);
+    opacity:0; pointer-events:none;
+    transition:opacity .22s ease, transform .22s ease;
+    white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div id="app"></div>
+</div>
+
+<div class="toast" id="toast"><span id="toastText"></span></div>
+
+<script>
+let queue = [
+  { id: 1, club: "Ridgeline Youth Soccer", clipLabel: "Great save, 2nd half", reasonNum: "14 / 4",
+    candidates: [ { num:"14", name:"Maya Chen", meta:"54% match" }, { num:"4", name:"Ella Ruiz", meta:"46% match" } ] },
+  { id: 2, club: "Brightwater Youth Lacrosse", clipLabel: "Assist to the crease", reasonNum: "6 / 9",
+    candidates: [ { num:"6", name:"Owen Park", meta:"51% match" }, { num:"9", name:"Diego Alvarez", meta:"49% match" } ] },
+  { id: 3, club: "Cobblestone Little League", clipLabel: "Diving catch, 4th inning", reasonNum: "1 / 11",
+    candidates: [ { num:"1", name:"Sam Whitfield", meta:"57% match" }, { num:"11", name:"Theo Marsh", meta:"43% match" } ] }
+];
+
+let view = "list";
+let activeId = null;
+
+function showToast(text){
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2000);
+}
+
+function render(){
+  document.getElementById('app').innerHTML = view === "list" ? renderList() : renderReview(activeId);
+  bindEvents();
+}
+
+function renderList(){
+  const count = queue.length;
+
+  const header = `
+    <header class="app">
+      <div class="crumbs">Coach tools</div>
+      <div class="hero-row">
+        <div class="hero-text">
+          <h1>Review queue</h1>
+          <p>${count === 0 ? "All caught up" : "Clip" + (count>1?"s":"") + " need a quick check"}</p>
+        </div>
+        ${count > 0 ? `<div class="count-pill">${count}</div>` : ``}
+      </div>
+    </header>
+  `;
+
+  if(count === 0){
+    return header + `
+      <div class="empty">
+        <div class="check">✓</div>
+        <h3>Nothing waiting on you</h3>
+        <p>Every clip is matched.<br>Reels send on schedule.</p>
+      </div>
+    `;
+  }
+
+  const cards = queue.map(c => `
+    <div class="card" data-id="${c.id}">
+      <div class="jersey">🎬</div>
+      <div class="card-body">
+        <h4>${c.clipLabel}</h4>
+        <div class="team">${c.club}</div>
+        <span class="matchup">${c.reasonNum}</span>
+      </div>
+      <div class="chev">›</div>
+    </div>
+  `).join("");
+
+  return header + `
+    <div class="section-label">Needs your input</div>
+    <div class="list">${cards}</div>
+    <div class="footer-note">Unresolved clips by Friday are left out of the recap, not guessed.</div>
+  `;
+}
+
+function renderReview(id){
+  const c = queue.find(x => x.id === id);
+  const cands = c.candidates.map(cand => `
+    <div class="cand" data-num="${cand.num}" data-name="${cand.name}">
+      <div class="num">${cand.num}</div>
+      <div class="info">
+        <div class="name">${cand.name}</div>
+        <div class="meta">${cand.meta}</div>
+      </div>
+      <div class="pick">Confirm</div>
+    </div>
+  `).join("");
+
+  return `
+    <header class="app">
+      <button class="back-x" id="backBtn">‹ Back to queue</button>
+      <div class="hero-row">
+        <div class="hero-text">
+          <h1>${c.reasonNum} look alike</h1>
+          <p>${c.club}</p>
+        </div>
+      </div>
+    </header>
+    <div class="video-frame">
+      <div class="play">▶</div>
+      <div class="tag">${c.clipLabel}</div>
+    </div>
+    <div class="review-body">
+      <h3>Which player is this?</h3>
+      <p class="sub">Numbers ${c.reasonNum} are easy to mix up on camera. Pick the right player.</p>
+      <div class="candidates">${cands}</div>
+      <button class="none-btn" id="noneBtn">Neither of these</button>
+    </div>
+  `;
+}
+
+function bindEvents(){
+  document.querySelectorAll('.card').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      activeId = parseInt(el.dataset.id);
+      view = "review";
+      render();
+    });
+  });
+  const back = document.getElementById('backBtn');
+  if(back) back.addEventListener('click', ()=>{ view="list"; activeId=null; render(); });
+
+  document.querySelectorAll('.cand').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const name = el.dataset.name;
+      queue = queue.filter(c => c.id !== activeId);
+      view = "list";
+      showToast(`Matched to ${name}`);
+      render();
+    });
+  });
+
+  const noneBtn = document.getElementById('noneBtn');
+  if(noneBtn) noneBtn.addEventListener('click', ()=>{
+    queue = queue.filter(c => c.id !== activeId);
+    view = "list";
+    showToast("Left out of the recap");
+    render();
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
