@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SidelineReel — Coach Review Queue</title>
+<style>
+  :root{
+    --ink:#14231C;
+    --field:#2C6E49;
+    --field-dark:#1E4D33;
+    --flag:#E8963C;
+    --flag-soft:#FCEBD3;
+    --paper:#FFFFFF;
+    --sand:#F6F4EF;
+    --line:#E4E1D8;
+    --muted:#6E7568;
+    --good:#2C6E49;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background:var(--sand);
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:32px 16px;
+    min-height:100vh;
+  }
+  .phone{
+    width:390px;
+    max-width:100%;
+    background:var(--paper);
+    border-radius:28px;
+    box-shadow:0 20px 60px rgba(20,35,28,0.18);
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  header.app{
+    background:var(--field-dark);
+    color:#fff;
+    padding:20px 20px 18px;
+  }
+  header.app .crumbs{
+    font-size:12px;
+    letter-spacing:0.02em;
+    color:#B9D4C2;
+    margin-bottom:6px;
+    cursor:pointer;
+  }
+  header.app h1{
+    margin:0;
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  header.app p{
+    margin:4px 0 0;
+    font-size:13px;
+    color:#CFE3D6;
+  }
+  .screen{ min-height:560px; display:flex; flex-direction:column; }
+  .list{ padding:14px 16px 20px; display:flex; flex-direction:column; gap:10px; flex:1; }
+  .empty{
+    margin:auto;
+    text-align:center;
+    padding:40px 24px;
+    color:var(--muted);
+  }
+  .empty .check{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--flag-soft);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 14px;
+    font-size:26px;
+    color:var(--field);
+  }
+  .empty h3{ color:var(--ink); margin:0 0 6px; font-size:17px; }
+  .empty p{ margin:0; font-size:13.5px; line-height:1.5; }
+
+  .card{
+    display:flex;
+    gap:12px;
+    padding:12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--paper);
+    cursor:pointer;
+    transition:border-color .15s ease, transform .1s ease;
+    text-align:left;
+  }
+  .card:hover{ border-color:var(--flag); }
+  .card:active{ transform:scale(0.99); }
+  .thumb{
+    width:64px;height:64px;border-radius:10px;
+    background:linear-gradient(135deg,#DCE7DF,#C6D6CB);
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;color:var(--field-dark);
+    flex-shrink:0;
+    position:relative;
+  }
+  .thumb .badge{
+    position:absolute; top:-6px; right:-6px;
+    background:var(--flag); color:#fff;
+    font-size:10px; font-weight:700;
+    padding:2px 6px; border-radius:20px;
+  }
+  .card-body{ flex:1; min-width:0; }
+  .card-body .top-row{
+    display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+  }
+  .card-body h4{ margin:0; font-size:14.5px; font-weight:600; }
+  .card-body .team{ font-size:11.5px; color:var(--muted); }
+  .card-body .why{
+    margin-top:6px;
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .chev{ align-self:center; color:var(--muted); font-size:18px; }
+
+  .section-label{
+    padding:16px 16px 4px;
+    font-size:12.5px;
+    color:var(--muted);
+  }
+
+  /* Review screen */
+  .review{ flex:1; display:flex; flex-direction:column; }
+  .video-frame{
+    background:linear-gradient(135deg,#22382B,#14231C);
+    height:190px;
+    display:flex;align-items:center;justify-content:center;
+    color:#EFE9DA;
+    position:relative;
+  }
+  .video-frame .play{
+    width:52px;height:52px;border-radius:50%;
+    background:rgba(255,255,255,0.14);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;
+  }
+  .video-frame .tag{
+    position:absolute; bottom:10px; left:12px;
+    font-size:11.5px; background:rgba(0,0,0,0.4);
+    padding:4px 9px; border-radius:20px;
+  }
+  .review-body{ padding:18px 18px 22px; flex:1; display:flex; flex-direction:column; }
+  .review-body h3{ margin:0 0 4px; font-size:16.5px; }
+  .review-body .sub{ margin:0 0 18px; font-size:13px; color:var(--muted); line-height:1.5; }
+  .candidates{ display:flex; flex-direction:column; gap:10px; }
+  .cand{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 14px;
+    border:1.5px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--paper);
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .cand:hover{ border-color:var(--field); background:#F3F8F4; }
+  .cand .num{
+    width:38px;height:38px;border-radius:9px;
+    background:var(--field-dark); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700; font-size:14px; flex-shrink:0;
+  }
+  .cand .info{ flex:1; }
+  .cand .info .name{ font-weight:600; font-size:14px; }
+  .cand .info .meta{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .cand .pick{
+    font-size:12px; color:var(--field); font-weight:600;
+  }
+  .none-btn{
+    margin-top:14px;
+    background:none; border:1.5px dashed var(--line);
+    border-radius:var(--radius);
+    padding:12px; font-size:13px; color:var(--muted);
+    cursor:pointer;
+  }
+  .none-btn:hover{ border-color:var(--muted); color:var(--ink); }
+
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff;
+    padding:12px 20px; border-radius:30px;
+    font-size:13.5px; display:flex; align-items:center; gap:8px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    opacity:0; pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+    z-index:20;
+    white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+  .toast .dot{ width:8px;height:8px;border-radius:50%; background:var(--flag); }
+
+  .footer-note{
+    padding:12px 20px 18px;
+    font-size:11.5px;
+    color:var(--muted);
+    border-top:1px solid var(--line);
+    line-height:1.5;
+  }
+  .back-x{
+    background:none;border:none;color:#CFE3D6;
+    font-size:13px;cursor:pointer;padding:0;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div id="app"></div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastText"></span></div>
+
+<script>
+// ---- Mock data: clips currently held for review ----
+let queue = [
+  {
+    id: 1,
+    club: "Ridgeline Youth Soccer",
+    clipLabel: "Great save, 2nd half",
+    reasonNum: "14 / 4",
+    candidates: [
+      { num: "14", name: "Maya Chen", meta: "Confidence 54%" },
+      { num: "4", name: "Ella Ruiz", meta: "Confidence 46%" }
+    ]
+  },
+  {
+    id: 2,
+    club: "Brightwater Youth Lacrosse",
+    clipLabel: "Assist to the crease, 1st period",
+    reasonNum: "6 / 9",
+    candidates: [
+      { num: "6", name: "Owen Park", meta: "Confidence 51%" },
+      { num: "9", name: "Diego Alvarez", meta: "Confidence 49%" }
+    ]
+  },
+  {
+    id: 3,
+    club: "Cobblestone Little League",
+    clipLabel: "Diving catch, top of the 4th",
+    reasonNum: "1 / 11",
+    candidates: [
+      { num: "1", name: "Sam Whitfield", meta: "Confidence 57%" },
+      { num: "11", name: "Theo Marsh", meta: "Confidence 43%" }
+    ]
+  }
+];
+
+let view = "list"; // "list" | "review"
+let activeId = null;
+
+function showToast(text){
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+function render(){
+  const app = document.getElementById('app');
+  if(view === "list"){
+    app.innerHTML = renderList();
+  } else {
+    app.innerHTML = renderReview(activeId);
+  }
+  bindEvents();
+}
+
+function renderList(){
+  const count = queue.length;
+  const header = `
+    <header class="app">
+      <div class="crumbs">Coach tools</div>
+      <h1>Review queue</h1>
+      <p>${count === 0 ? "All caught up" : count + " clip" + (count>1?"s":"") + " need a quick check"}</p>
+    </header>
+  `;
+
+  if(count === 0){
+    return header + `
+      <div class="screen">
+        <div class="empty">
+          <div class="check">✓</div>
+          <h3>Nothing waiting on you</h3>
+          <p>Every clip is matched. Reels send on schedule.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  const cards = queue.map(c => `
+    <div class="card" data-id="${c.id}">
+      <div class="thumb">🎬<span class="badge">${c.reasonNum}</span></div>
+      <div class="card-body">
+        <div class="top-row">
+          <h4>${c.clipLabel}</h4>
+        </div>
+        <div class="team">${c.club}</div>
+        <div class="why">Numbers ${c.reasonNum} look alike. Pick the right player.</div>
+      </div>
+      <div class="chev">›</div>
+    </div>
+  `).join("");
+
+  return header + `
+    <div class="screen">
+      <div class="section-label">Needs your input</div>
+      <div class="list">${cards}</div>
+      <div class="footer-note">Unresolved clips by Friday are left out of the recap, not guessed.</div>
+    </div>
+  `;
+}
+
+function renderReview(id){
+  const c = queue.find(x => x.id === id);
+  const cands = c.candidates.map(cand => `
+    <div class="cand" data-num="${cand.num}" data-name="${cand.name}">
+      <div class="num">${cand.num}</div>
+      <div class="info">
+        <div class="name">${cand.name}</div>
+        <div class="meta">${cand.meta}</div>
+      </div>
+      <div class="pick">Confirm</div>
+    </div>
+  `).join("");
+
+  return `
+    <header class="app">
+      <button class="back-x" id="backBtn">‹ Back to queue</button>
+      <h1 style="margin-top:8px;">Which player is this?</h1>
+      <p>${c.club}</p>
+    </header>
+    <div class="review">
+      <div class="video-frame">
+        <div class="play">▶</div>
+        <div class="tag">${c.clipLabel}</div>
+      </div>
+      <div class="review-body">
+        <h3>Two players look alike here</h3>
+        <p class="sub">Numbers ${c.reasonNum} are easy to mix up on camera. Pick the right player.</p>
+        <div class="candidates">${cands}</div>
+        <button class="none-btn" id="noneBtn">Neither of these</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindEvents(){
+  document.querySelectorAll('.card').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      activeId = parseInt(el.dataset.id);
+      view = "review";
+      render();
+    });
+  });
+  const back = document.getElementById('backBtn');
+  if(back) back.addEventListener('click', ()=>{ view="list"; activeId=null; render(); });
+
+  document.querySelectorAll('.cand').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const name = el.dataset.name;
+      queue = queue.filter(c => c.id !== activeId);
+      view = "list";
+      showToast(`Matched to ${name}`);
+      render();
+    });
+  });
+
+  const noneBtn = document.getElementById('noneBtn');
+  if(noneBtn) noneBtn.addEventListener('click', ()=>{
+    queue = queue.filter(c => c.id !== activeId);
+    view = "list";
+    showToast("Left out of the recap");
+    render();
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
